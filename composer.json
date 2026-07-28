@@ -1,0 +1,52 @@
+{
+    "name": "actualize/act-primary-order-refs",
+    "description": "Fills missing primary order transaction and delivery references on orders.",
+    "version": "1.0.0",
+    "type": "shopware-platform-plugin",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Actualize",
+            "email": "plugin@actualize.de",
+            "homepage": "https://actualize.de",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.4",
+        "shopware/core": ">=6.7 <6.8"
+    },
+    "scripts": {
+        "format": "docker run --rm -v $(pwd):/ext shopware/shopware-cli:latest extension format /ext",
+        "check": "docker run --rm -v $(pwd):/ext shopware/shopware-cli:latest extension validate --full /ext"
+    },
+    "extra": {
+        "shopware-plugin-class": "Actualize\\ActPrimaryOrderRefs\\ActPrimaryOrderRefs",
+        "label": {
+            "de-DE": "Actualize: Primäre Bestellreferenzen",
+            "en-GB": "Actualize: Primary Order References"
+        },
+        "description": {
+            "de-DE": "Ergänzt fehlende primäre Transaktions- und Lieferreferenzen an Bestellungen, die per API oder Import angelegt wurden, damit Zahlungsstatus, Versandstatus und Dokumente stimmen.",
+            "en-GB": "Fills in missing primary transaction and delivery references on orders created via API or import, so payment status, shipping status and generated documents render correctly."
+        },
+        "manufacturerLink": {
+            "de-DE": "https://actualize.de",
+            "en-GB": "https://actualize.de"
+        },
+        "supportLink": {
+            "de-DE": "https://actualize.de",
+            "en-GB": "https://actualize.de"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Actualize\\ActPrimaryOrderRefs\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Actualize\\ActPrimaryOrderRefs\\Tests\\": "tests/"
+        }
+    }
+}

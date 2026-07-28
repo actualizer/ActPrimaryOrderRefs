@@ -1,0 +1,14 @@
+parameters:
+    level: 8
+    # PHPDoc types are HINTS, not GUARANTEES. Lazy DAL hydration, framework
+    # version drift, and subscriber ordering can violate them at runtime.
+    # Treat them as uncertain so defensive `?->`/`?? default`/`is_*()` guards
+    # are NOT flagged as redundant. Defense stays.
+    treatPhpDocTypesAsCertain: false
+    paths:
+        - src/
+    excludePaths:
+        - src/Migration/*
+    # Some rules below only exist in the shopware-cli PHPStan bundle, so they
+    # never match when the local project PHPStan runs the same config.
+    reportUnmatchedIgnoredErrors: false
