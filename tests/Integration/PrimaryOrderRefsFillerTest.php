@@ -28,6 +28,9 @@ class PrimaryOrderRefsFillerTest extends TestCase
     use KernelTestBehaviour;
     use OrderFixture;
 
+    /** Mirrors the private batch size of {@see PrimaryOrderRefsFiller}. */
+    private const BATCH_SIZE = 1000;
+
     public function testPicksMostRecentTransactionAndBreaksTiesByIdAscending(): void
     {
         $context = Context::createDefaultContext();
@@ -135,6 +138,69 @@ class PrimaryOrderRefsFillerTest extends TestCase
         self::assertSame($deliveryId, $this->readPrimaryDeliveryId($orderId));
     }
 
+    public function testFillsOrdersReportedBeyondTheFirstIdChunk(): void
+    {
+        $context = Context::createDefaultContext();
+        $firstOrderId = Uuid::randomHex();
+        $firstTransactionId = Uuid::randomHex();
+        $lastOrderId = Uuid::randomHex();
+        $lastTransactionId = Uuid::randomHex();
+
+        $this->createOrder($firstOrderId, $firstTransactionId, $context);
+        $this->createOrder($lastOrderId, $lastTransactionId, $context);
+        $this->clearPrimaryRefs($firstOrderId);
+        $this->clearPrimaryRefs($lastOrderId);
+
+        // One id per chunk boundary: a bulk write reports every written row, and ids
+        // whose order is already filled drop out of the candidate query, so the padding
+        // stands in for them.
+        $ids = [
+            Uuid::fromHexToBytes($firstTransactionId),
+            ...$this->binaryIdPadding(self::BATCH_SIZE),
+            Uuid::fromHexToBytes($lastTransactionId),
+        ];
+
+        self::assertSame(2, $this->filler()->fillTransactionsForTransactionIds($ids));
+        self::assertSame($firstTransactionId, $this->readPrimaryTransactionId($firstOrderId));
+        self::assertSame($lastTransactionId, $this->readPrimaryTransactionId($lastOrderId));
+    }
+
+    public function testFillsDeliveriesReportedBeyondTheFirstIdChunk(): void
+    {
+        $context = Context::createDefaultContext();
+        $firstOrderId = Uuid::randomHex();
+        $lastOrderId = Uuid::randomHex();
+
+        $firstDeliveryId = $this->createOrder($firstOrderId, Uuid::randomHex(), $context);
+        $lastDeliveryId = $this->createOrder($lastOrderId, Uuid::randomHex(), $context);
+        $this->clearPrimaryRefs($firstOrderId);
+        $this->clearPrimaryRefs($lastOrderId);
+
+        $ids = [
+            Uuid::fromHexToBytes($firstDeliveryId),
+            ...$this->binaryIdPadding(self::BATCH_SIZE),
+            Uuid::fromHexToBytes($lastDeliveryId),
+        ];
+
+        self::assertSame(2, $this->filler()->fillDeliveriesForDeliveryIds($ids));
+        self::assertSame($firstDeliveryId, $this->readPrimaryDeliveryId($firstOrderId));
+        self::assertSame($lastDeliveryId, $this->readPrimaryDeliveryId($lastOrderId));
+    }
+
+    /**
+     * @return list<string> binary(16) ids matching no row
+     */
+    private function binaryIdPadding(int $count): array
+    {
+        $ids = [];
+
+        for ($i = 0; $i < $count; ++$i) {
+            $ids[] = Uuid::randomBytes();
+        }
+
+        return $ids;
+    }
+
     /**
      * Creates an order carrying one transaction and one delivery.
      *
@@ -146,6 +212,9 @@ class PrimaryOrderRefsFillerTest extends TestCase
         \assert($orderRepository instanceof EntityRepository);
 
         $orderData = $this->getOrderData($orderId, $context);
+        // The fixture hardcodes the deep link code, so a second order in the same test
+        // would hit `uniq.deep_link_code`.
+        $orderData[0]['deepLinkCode'] = Uuid::randomHex();
         $orderData[0]['transactions'] = [
             [
                 'id' => $transactionId,

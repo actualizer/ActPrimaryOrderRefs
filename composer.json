@@ -1,9 +1,9 @@
 {
-    "name": "actualize/act-primary-order-refs",
+    "name": "actualizer/primary-order-refs",
     "description": "Fills missing primary order transaction and delivery references on orders.",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "type": "shopware-platform-plugin",
-    "license": "proprietary",
+    "license": "MIT",
     "authors": [
         {
             "name": "Actualize",
@@ -35,8 +35,8 @@
             "en-GB": "https://actualize.de"
         },
         "supportLink": {
-            "de-DE": "https://actualize.de",
-            "en-GB": "https://actualize.de"
+            "de-DE": "https://github.com/actualizer/ActPrimaryOrderRefs/issues",
+            "en-GB": "https://github.com/actualizer/ActPrimaryOrderRefs/issues"
         }
     },
     "autoload": {

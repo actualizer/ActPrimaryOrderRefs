@@ -3,6 +3,7 @@
 namespace Actualize\ActPrimaryOrderRefs\Subscriber;
 
 use Actualize\ActPrimaryOrderRefs\Service\PrimaryOrderRefsFiller;
+use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryDefinition;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionDefinition;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityWriteResult;
@@ -17,8 +18,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class OrderRefsSubscriber implements EventSubscriberInterface
 {
-    public function __construct(private readonly PrimaryOrderRefsFiller $filler)
-    {
+    public function __construct(
+        private readonly PrimaryOrderRefsFiller $filler,
+        private readonly LoggerInterface $logger
+    ) {
     }
 
     /**
@@ -40,7 +43,11 @@ class OrderRefsSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->filler->fillTransactionsForTransactionIds($ids);
+        try {
+            $this->filler->fillTransactionsForTransactionIds($ids);
+        } catch (\Throwable $exception) {
+            $this->logUnfilled('transaction', \count($ids), $exception);
+        }
     }
 
     public function onOrderDeliveryWritten(EntityWrittenEvent $event): void
@@ -51,7 +58,25 @@ class OrderRefsSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->filler->fillDeliveriesForDeliveryIds($ids);
+        try {
+            $this->filler->fillDeliveriesForDeliveryIds($ids);
+        } catch (\Throwable $exception) {
+            $this->logUnfilled('delivery', \count($ids), $exception);
+        }
+    }
+
+    /**
+     * The written events fire after the write transaction committed, so an escaping
+     * exception would fail a checkout or import request for an order that already
+     * exists. A missing reference is repairable with `act:primary-order-refs:fill`, a
+     * retried order is not. Ids are raw binary and identify orders, so only the count.
+     */
+    private function logUnfilled(string $reference, int $idCount, \Throwable $exception): void
+    {
+        $this->logger->error(
+            \sprintf('Failed to fill primary order %s references, %d written row(s) left unresolved', $reference, $idCount),
+            ['exception' => $exception]
+        );
     }
 
     /**

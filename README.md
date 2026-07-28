@@ -27,7 +27,7 @@ at upgrade time, and never sees the orders imported afterwards.
 
 | Piece | Purpose |
 | --- | --- |
-| `PrimaryOrderRefsFiller` | The SQL. Batched (1000 orders per pass), DBAL only. |
+| `PrimaryOrderRefsFiller` | The SQL. Batched (1000 ids per statement), DBAL only. |
 | `OrderRefsSubscriber` | Listens on `order_transaction.written` / `order_delivery.written` and fills the affected orders immediately. |
 | Plugin migration | One-off backfill for orders that already exist at install time. |
 | `act:primary-order-refs:fill` | Manual sweep to verify and repair without a new release. |
@@ -50,6 +50,27 @@ re-enter the very write stack the subscriber runs in, and it would default the
 `primary_order_*_version_id` columns to the live version instead of the version the
 referenced row actually carries.
 
+Every id list is split into batches of 1000 before it reaches a statement — both the
+orders found by a sweep and the ids reported by a single write. A bulk import writing
+tens of thousands of rows in one request would otherwise produce one statement with a
+placeholder per id, beyond what the MySQL protocol accepts.
+
+## Failure behaviour
+
+The subscriber never lets a database error escape. `order_transaction.written` and
+`order_delivery.written` are dispatched *after* the write transaction has committed, so
+an exception escaping the subscriber would fail a checkout or import request for an
+order that already exists — and the caller would likely retry it. Instead the failure is
+logged at `error` level:
+
+```
+Failed to fill primary order transaction references, 12 written row(s) left unresolved
+```
+
+The affected orders keep their `NULL` references until the next run of
+`act:primary-order-refs:fill`. Order ids are not logged — they are raw binary and
+identify customer orders. Treat such an entry as a prompt to run the command.
+
 ## Requirements
 
 - Shopware 6.7 (`>=6.7 <6.8`)
@@ -57,6 +78,19 @@ referenced row actually carries.
 
 ## Installation
 
+### Via Composer (recommended)
+
+```bash
+composer require actualizer/primary-order-refs
+bin/console plugin:refresh
+bin/console plugin:install --activate ActPrimaryOrderRefs
+bin/console cache:clear
+```
+
+### Manual Installation
+
+1. Copy the plugin folder to `custom/plugins/ActPrimaryOrderRefs`
+2. Run the following commands from your Shopware root directory:
 ```bash
 bin/console plugin:refresh
 bin/console plugin:install --activate ActPrimaryOrderRefs
@@ -93,6 +127,18 @@ bin/console act:primary-order-refs:fill --deliveries-only
   are refreshed on the next admin index run (`bin/console es:admin:index`); the plugin
   does not dispatch index messages itself.
 
+## Support
+
+For issues and feature requests, please use the GitHub issue tracker.
+
 ## License
 
-Proprietary. All rights reserved by Actualize.
+This plugin is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Credits
+
+Developed by Actualize
+
+---
+
+Made with ❤️ for the Shopware Community

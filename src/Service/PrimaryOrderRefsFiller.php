@@ -83,37 +83,48 @@ class PrimaryOrderRefsFiller
     /**
      * Fills the primary transaction reference for the orders owning the given transactions.
      *
+     * The list is whatever a single write carried, so it is chunked: one placeholder
+     * per id would otherwise exceed the MySQL protocol limit on a large import.
+     *
      * @param list<string> $transactionIds binary(16) transaction ids
      *
      * @return int number of order rows updated
      */
     public function fillTransactionsForTransactionIds(array $transactionIds): int
     {
-        if ($transactionIds === []) {
-            return 0;
+        $orderIds = [];
+
+        foreach (array_chunk($transactionIds, self::BATCH_SIZE) as $idChunk) {
+            /** @var list<string> $found */
+            $found = $this->connection->fetchFirstColumn(
+                'SELECT DISTINCT `order_transaction`.`order_id`
+                 FROM `order_transaction`
+                 INNER JOIN `order`
+                     ON `order`.`id` = `order_transaction`.`order_id`
+                     AND `order`.`version_id` = `order_transaction`.`order_version_id`
+                 WHERE `order_transaction`.`id` IN (:ids)
+                   AND `order`.`primary_order_transaction_id` IS NULL',
+                ['ids' => $idChunk],
+                ['ids' => ArrayParameterType::BINARY]
+            );
+
+            // DISTINCT only deduplicates within a chunk.
+            $orderIds = array_unique([...$orderIds, ...$found]);
         }
 
-        $orderIds = $this->connection->fetchFirstColumn(
-            'SELECT DISTINCT `order_transaction`.`order_id`
-             FROM `order_transaction`
-             INNER JOIN `order`
-                 ON `order`.`id` = `order_transaction`.`order_id`
-                 AND `order`.`version_id` = `order_transaction`.`order_version_id`
-             WHERE `order_transaction`.`id` IN (:ids)
-               AND `order`.`primary_order_transaction_id` IS NULL',
-            ['ids' => $transactionIds],
-            ['ids' => ArrayParameterType::BINARY]
-        );
+        $updated = 0;
 
-        if ($orderIds === []) {
-            return 0;
+        foreach (array_chunk(array_values($orderIds), self::BATCH_SIZE) as $orderIdChunk) {
+            $updated += $this->updateTransactions($orderIdChunk);
         }
 
-        return $this->updateTransactions($orderIds);
+        return $updated;
     }
 
     /**
      * Fills the primary delivery reference for the orders owning the given deliveries.
+     *
+     * Chunked for the same reason as the transaction counterpart.
      *
      * @param list<string> $deliveryIds binary(16) delivery ids
      *
@@ -121,27 +132,33 @@ class PrimaryOrderRefsFiller
      */
     public function fillDeliveriesForDeliveryIds(array $deliveryIds): int
     {
-        if ($deliveryIds === []) {
-            return 0;
+        $orderIds = [];
+
+        foreach (array_chunk($deliveryIds, self::BATCH_SIZE) as $idChunk) {
+            /** @var list<string> $found */
+            $found = $this->connection->fetchFirstColumn(
+                'SELECT DISTINCT `order_delivery`.`order_id`
+                 FROM `order_delivery`
+                 INNER JOIN `order`
+                     ON `order`.`id` = `order_delivery`.`order_id`
+                     AND `order`.`version_id` = `order_delivery`.`order_version_id`
+                 WHERE `order_delivery`.`id` IN (:ids)
+                   AND `order`.`primary_order_delivery_id` IS NULL',
+                ['ids' => $idChunk],
+                ['ids' => ArrayParameterType::BINARY]
+            );
+
+            // DISTINCT only deduplicates within a chunk.
+            $orderIds = array_unique([...$orderIds, ...$found]);
         }
 
-        $orderIds = $this->connection->fetchFirstColumn(
-            'SELECT DISTINCT `order_delivery`.`order_id`
-             FROM `order_delivery`
-             INNER JOIN `order`
-                 ON `order`.`id` = `order_delivery`.`order_id`
-                 AND `order`.`version_id` = `order_delivery`.`order_version_id`
-             WHERE `order_delivery`.`id` IN (:ids)
-               AND `order`.`primary_order_delivery_id` IS NULL',
-            ['ids' => $deliveryIds],
-            ['ids' => ArrayParameterType::BINARY]
-        );
+        $updated = 0;
 
-        if ($orderIds === []) {
-            return 0;
+        foreach (array_chunk(array_values($orderIds), self::BATCH_SIZE) as $orderIdChunk) {
+            $updated += $this->updateDeliveries($orderIdChunk);
         }
 
-        return $this->updateDeliveries($orderIds);
+        return $updated;
     }
 
     /**

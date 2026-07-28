@@ -10,6 +10,7 @@
 
         <service id="Actualize\ActPrimaryOrderRefs\Subscriber\OrderRefsSubscriber">
             <argument type="service" id="Actualize\ActPrimaryOrderRefs\Service\PrimaryOrderRefsFiller"/>
+            <argument type="service" id="logger"/>
             <tag name="kernel.event_subscriber"/>
         </service>
 
