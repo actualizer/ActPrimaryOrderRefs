@@ -1,0 +1,11 @@
+{
+  "main.js": {
+    "file": "assets/act-primary-order-refs-jhqlrWfA.js",
+    "name": "act-primary-order-refs",
+    "src": "main.js",
+    "isEntry": true,
+    "css": [
+      "assets/act-primary-order-refs-hABvIOKm.css"
+    ]
+  }
+}

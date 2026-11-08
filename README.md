@@ -73,7 +73,7 @@ identify customer orders. Treat such an entry as a prompt to run the command.
 
 ## Requirements
 
-- Shopware 6.7 (`>=6.7 <6.8`)
+- Shopware `>=6.7 <6.8`, tested with 6.7.16.0
 - PHP 8.4+
 
 ## Installation

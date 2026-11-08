@@ -1,0 +1,25 @@
+{
+  "base": "/bundles/actprimaryorderrefs/administration/",
+  "entryPoints": {
+    "act-primary-order-refs": {
+      "css": [
+        "/bundles/actprimaryorderrefs/administration/assets/act-primary-order-refs-hABvIOKm.css"
+      ],
+      "dynamic": [],
+      "js": [
+        "/bundles/actprimaryorderrefs/administration/assets/act-primary-order-refs-jhqlrWfA.js"
+      ],
+      "legacy": false,
+      "preload": []
+    }
+  },
+  "legacy": false,
+  "metadatas": {},
+  "version": [
+    "7.1.0",
+    7,
+    1,
+    0
+  ],
+  "viteServer": null
+}

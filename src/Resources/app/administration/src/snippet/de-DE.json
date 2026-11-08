@@ -1,0 +1,18 @@
+{
+  "act-primary-order-refs": {
+    "settings": {
+      "info": {
+        "howTo": {
+          "title": "So funktioniert's",
+          "item1": "Das Plugin braucht keine Einstellungen und arbeitet im Hintergrund.",
+          "item2": "Bestellungen aus Admin-API, ERP-Anbindung, Marktplatz oder Import bekommen ihre primäre Zahlung und Lieferung automatisch ergänzt.",
+          "item3": "Ohne diese Angaben bleiben Zahlungs- und Versandstatus in der Bestellübersicht leer, und Rechnungen zeigen keine Zahlungs- und Versandart.",
+          "item4": "Bei der Installation werden alle bestehenden Bestellungen einmalig nachgetragen. Vorhandene Angaben werden nie überschrieben, ergänzt werden nur fehlende.",
+          "item5": "Steht im Log „Failed to fill primary order …“, trägt der Konsolenbefehl act:primary-order-refs:fill die fehlenden Angaben nach."
+        },
+        "description": "Ergänzt fehlende primäre Zahlungs- und Lieferreferenzen an Bestellungen, die per API oder Import angelegt wurden.",
+        "issues": "Probleme oder Feature-Wünsche?"
+      }
+    }
+  }
+}

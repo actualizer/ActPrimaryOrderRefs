@@ -1,0 +1,18 @@
+{
+  "act-primary-order-refs": {
+    "settings": {
+      "info": {
+        "howTo": {
+          "title": "How it works",
+          "item1": "The plugin needs no configuration and works in the background.",
+          "item2": "Orders from the Admin API, an ERP connection, a marketplace or an import get their primary payment and delivery filled in automatically.",
+          "item3": "Without them the payment and shipping status stay empty in the order overview, and invoices show no payment or shipping method.",
+          "item4": "On installation all existing orders are filled in once. Existing values are never overwritten, only missing ones are added.",
+          "item5": "If the log says \"Failed to fill primary order …\", the console command act:primary-order-refs:fill adds the missing references."
+        },
+        "description": "Fills in missing primary payment and delivery references on orders created via API or import.",
+        "issues": "Problems or feature requests?"
+      }
+    }
+  }
+}
