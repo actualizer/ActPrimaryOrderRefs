@@ -15,6 +15,11 @@ order that gains a transaction or a delivery *after* it was created.
 The one-time backfill that ships with the 6.7 upgrade cannot help here: it runs once,
 at upgrade time, and never sees the orders imported afterwards.
 
+## Requirements
+
+- Shopware `>=6.7 <6.8`, tested with 6.7.16.0
+- PHP 8.4+
+
 ## What breaks while the references are NULL
 
 - **Order list** — the payment status and shipping status columns stay empty.
@@ -70,11 +75,6 @@ Failed to fill primary order transaction references, 12 written row(s) left unre
 The affected orders keep their `NULL` references until the next run of
 `act:primary-order-refs:fill`. Order ids are not logged — they are raw binary and
 identify customer orders. Treat such an entry as a prompt to run the command.
-
-## Requirements
-
-- Shopware `>=6.7 <6.8`, tested with 6.7.16.0
-- PHP 8.4+
 
 ## Installation
 
